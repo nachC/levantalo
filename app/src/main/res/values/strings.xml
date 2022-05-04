@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">levantalo</string>
+    <string name="search_items_button">Pickup items</string>
+    <string name="gift_items_button">Gift items</string>
+</resources>
