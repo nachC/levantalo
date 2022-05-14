@@ -26,6 +26,9 @@ class ItemsViewModel @Inject constructor(
     private val _isItemAddedState = mutableStateOf<Response<String?>>(Response.Success(null))
     val isItemAddedState: State<Response<String?>> = _isItemAddedState
 
+    private val _takeOutUiState = mutableStateOf<TakeOutUiState>(TakeOutUiState.MainView)
+    val takeOutUiState = _takeOutUiState
+
     init {
         getItems()
     }
@@ -44,14 +47,35 @@ class ItemsViewModel @Inject constructor(
         location: LatLng,
         description: String?
     ) {
-        _isItemAddedState.value = Response.Loading
+        _takeOutUiState.value = TakeOutUiState.Loading
         val _location = ItemLatLng(latitude = location.latitude, longitude = location.longitude)
         val item = Item(picture, _location, description, createdDate = LocalDateTime.now().toString())
         viewModelScope.launch {
             repository.addItemToFirestore(item).collect { response ->
                 Log.d("ItemsViewModel", "addItem: $response")
                 _isItemAddedState.value = response
+                _takeOutUiState.value = TakeOutUiState.MainView
             }
         }
     }
+
+    fun openCameraView() {
+        _takeOutUiState.value = TakeOutUiState.CameraView
+    }
+
+    fun openGalleryView() {
+        _takeOutUiState.value = TakeOutUiState.GalleryView
+    }
+
+    fun openMainView() {
+        _takeOutUiState.value = TakeOutUiState.MainView
+    }
+}
+
+sealed class TakeOutUiState {
+    object MainView: TakeOutUiState()
+    object CameraView: TakeOutUiState()
+    object GalleryView: TakeOutUiState()
+    object Error: TakeOutUiState()
+    object Loading: TakeOutUiState()
 }

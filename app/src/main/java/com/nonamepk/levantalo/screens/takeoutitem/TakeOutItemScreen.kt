@@ -41,7 +41,9 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.maps.model.LatLng
 import com.nonamepk.levantalo.composables.CustomTextField
 import com.nonamepk.levantalo.model.Response
+import com.nonamepk.levantalo.navigation.AppScreens
 import com.nonamepk.levantalo.screens.home.ItemsViewModel
+import com.nonamepk.levantalo.screens.home.TakeOutUiState
 import com.nonamepk.levantalo.utils.EMPTY_IMAGE_URI
 import com.nonamepk.levantalo.utils.Permission
 import com.nonamepk.levantalo.utils.executor
@@ -62,10 +64,7 @@ fun TakeOutItemScreen(
     viewModel: ItemsViewModel = hiltViewModel(),
     fusedLocationClient: FusedLocationProviderClient
 ) {
-
-    var takingPicture by remember { mutableStateOf(false) }
     var imageUri by remember { mutableStateOf(EMPTY_IMAGE_URI) }
-
     val context = LocalContext.current
 
     Permission(
@@ -99,40 +98,41 @@ fun TakeOutItemScreen(
             }
         }
     ) {
-        when (val addResponse = viewModel.isItemAddedState.value) {
-            is Response.Loading -> {
-                Log.d("TAG", "TakeOutItemScreen: LOADING...")
+        when (viewModel.takeOutUiState.value) {
+            is TakeOutUiState.MainView -> CreateBody(
+                imageUri = imageUri,
+                viewModel = viewModel,
+                onTakePictureClicked = { viewModel.openCameraView() },
+                onAddItemClicked = { description ->
+                    addItem(description = description, fusedLocationClient = fusedLocationClient, viewModel = viewModel)
+                }
+            )
+            is TakeOutUiState.CameraView -> CameraCaptureScreen(
+                viewModel = viewModel,
+            ) { file ->
+                imageUri = file.toUri()
             }
+            is TakeOutUiState.GalleryView -> GallerySelectionScreen(
+                viewModel = viewModel
+            ) {  uri ->
+                imageUri = uri
+            }
+            is TakeOutUiState.Error -> Text("Error")
+            is TakeOutUiState.Loading -> CircularProgressIndicator()
+        }
+
+        when (val addItemResponse = viewModel.isItemAddedState.value) {
+            is Response.Loading -> Unit
+            is Response.Error -> Toast.makeText(context, "Error adding item. Please, try again", Toast.LENGTH_SHORT).show()
             is Response.Success -> {
-                Log.d("Data", "TakeOutItemScreen: ${addResponse.data}")
-            }
-            is Response.Error -> Snackbar {
-                Text("Error adding item: ${addResponse.message}")
+                Log.d("TakeOutItemScreen", "Response: $addItemResponse")
+                if (addItemResponse.data != null) {
+                    Toast.makeText(context, "Item added", Toast.LENGTH_SHORT).show()
+                    navController.popBackStack(route = AppScreens.StartScreen.name, inclusive = false)
+                }
             }
         }
 
-        if (takingPicture) CameraCaptureScreen(
-            onImageFile = { file ->
-                takingPicture = false
-                imageUri = file.toUri()
-            },
-            onImageUri = { uri ->
-                takingPicture = false
-                imageUri = uri
-            }
-        )
-        else CreateBody(
-            imageUri = imageUri,
-            viewModel = viewModel,
-            onTakePictureClicked = { takingPicture = true },
-            onAddItemClicked = {
-                addItem(fusedLocationClient = fusedLocationClient, viewModel = viewModel)
-            },
-            onItemAdded = {
-                Log.d("TakeOutItemScreen", "Item added")
-                // TODO: navigate to StartScreen and remove from stack
-            }
-        )
     }
 }
 
@@ -140,9 +140,8 @@ fun TakeOutItemScreen(
 private fun CreateBody(
     imageUri: Uri,
     onTakePictureClicked: () -> Unit,
-    onAddItemClicked: () -> Unit = {},
+    onAddItemClicked: (description: String) -> Unit,
     viewModel: ItemsViewModel,
-    onItemAdded: () -> Unit
 ) {
 
     var description by remember { mutableStateOf("") }
@@ -185,37 +184,20 @@ private fun CreateBody(
             }
 
             if (!loading) Button(
-                onClick = onAddItemClicked,
+                onClick = { onAddItemClicked(description) },
                 modifier = Modifier.padding(20.dp)
             )
             {
                 Text(text = "Add Item")
             }
             else CircularProgressIndicator()
-
-            when (val addResponse = viewModel.isItemAddedState.value) {
-                is Response.Loading -> {
-                    loading = true
-                }
-                is Response.Success -> {
-                    loading = false
-                    Log.d("TakeOutItemScreen", "CreateBody: addResponse: ${addResponse.data}")
-                    if (addResponse.data != null) {
-                        Toast.makeText(LocalContext.current, "Item added successfully", Toast.LENGTH_SHORT).show()
-                        onItemAdded.invoke()
-                    }
-                }
-                is Response.Error -> {
-                    loading = false
-                    Text("Error")
-                }
-            }
         }
     }
 }
 
 @SuppressLint("MissingPermission")
 private fun addItem(
+    description: String?,
     fusedLocationClient: FusedLocationProviderClient,
     viewModel: ItemsViewModel) {
 
@@ -242,7 +224,7 @@ private fun addItem(
             } else {
                 fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
             }
-            location?.let { location -> viewModel.addItem(null, location, null) }
+            location?.let { location -> viewModel.addItem(null, location, description) }
         }
         .addOnFailureListener {
             Log.d("OnFailureListener", "Location: ${it.message}")
@@ -280,15 +262,14 @@ fun CameraPreview(
 @Composable
 fun CameraCaptureScreen(
     modifier: Modifier = Modifier,
+    viewModel: ItemsViewModel,
     cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA,
     onImageFile: (File) -> Unit = {},
-    onImageUri: (Uri) -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
     var previewUseCase by remember { mutableStateOf<UseCase>(Preview.Builder().build()) }
-    var pickingFromGallery by remember { mutableStateOf(false) }
     val imageCaptureUseCase by remember {
         mutableStateOf(
             ImageCapture.Builder()
@@ -296,13 +277,10 @@ fun CameraCaptureScreen(
                 .build()
         )
     }
+
     Box(modifier = modifier) {
         Box(Modifier.fillMaxSize()) {
-            if (pickingFromGallery)
-                GallerySelectionScreen { uri ->
-                    onImageUri(uri)
-                }
-            else CameraPreview(
+            CameraPreview(
                 modifier = Modifier.fillMaxSize(),
                 onUseCase = {
                     previewUseCase = it
@@ -318,6 +296,7 @@ fun CameraCaptureScreen(
                     onClick = {
                         coroutineScope.launch(Dispatchers.IO) {
                             onImageFile(imageCaptureUseCase.takePicture(context.executor))
+                            viewModel.openMainView()
                         }
                     },
                     modifier = Modifier.align(Alignment.Center)
@@ -330,9 +309,7 @@ fun CameraCaptureScreen(
                 }
 
                 IconButton(
-                    onClick = {
-                        pickingFromGallery = true
-                    },
+                    onClick = { viewModel.openGalleryView() },
                     modifier = Modifier.align(Alignment.CenterEnd)
                 ) {
                     Icon(
@@ -364,6 +341,7 @@ fun CameraCaptureScreen(
 @Composable
 fun GallerySelectionScreen(
     modifier: Modifier = Modifier,
+    viewModel: ItemsViewModel,
     onImageUri: (Uri) -> Unit = { }
 ) {
 
@@ -372,6 +350,7 @@ fun GallerySelectionScreen(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri: Uri? ->
             onImageUri(uri ?: EMPTY_IMAGE_URI)
+            viewModel.openMainView()
         }
     )
 

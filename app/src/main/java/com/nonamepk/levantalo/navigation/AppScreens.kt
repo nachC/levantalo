@@ -1,7 +1,5 @@
 package com.nonamepk.levantalo.navigation
 
-import com.nonamepk.levantalo.screens.takeoutitem.CameraPreview
-
 enum class AppScreens {
     HomeScreen,
     StartScreen,

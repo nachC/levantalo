@@ -7,7 +7,6 @@ import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.nonamepk.levantalo.screens.home.HomeScreen
 import com.nonamepk.levantalo.screens.start.StartScreen
-import com.nonamepk.levantalo.screens.takeoutitem.CameraCaptureScreen
 import com.nonamepk.levantalo.screens.takeoutitem.CameraPreview
 import com.nonamepk.levantalo.screens.takeoutitem.TakeOutItemScreen
 
@@ -35,9 +34,6 @@ fun AppNavigation(
         }
         composable(route = AppScreens.CameraPreview.name) {
             CameraPreview()
-        }
-        composable(route = AppScreens.CameraCapture.name) {
-            CameraCaptureScreen()
         }
     }
 }
