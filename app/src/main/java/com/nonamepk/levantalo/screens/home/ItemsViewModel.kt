@@ -1,5 +1,6 @@
 package com.nonamepk.levantalo.screens.home
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -11,6 +12,7 @@ import com.nonamepk.levantalo.model.LatLng as ItemLatLng
 import com.nonamepk.levantalo.model.Response
 import com.nonamepk.levantalo.repository.ItemRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
@@ -43,18 +45,21 @@ class ItemsViewModel @Inject constructor(
     }
 
     fun addItem(
-        picture: String?,
+        picture: Uri,
         location: LatLng,
         description: String?
     ) {
         _takeOutUiState.value = TakeOutUiState.Loading
         val _location = ItemLatLng(latitude = location.latitude, longitude = location.longitude)
-        val item = Item(picture, _location, description, createdDate = LocalDateTime.now().toString())
         viewModelScope.launch {
-            repository.addItemToFirestore(item).collect { response ->
-                Log.d("ItemsViewModel", "addItem: $response")
-                _isItemAddedState.value = response
-                _takeOutUiState.value = TakeOutUiState.MainView
+            repository.uploadImageToFbStorage(imageUri = picture).collect { uploadedImageUri ->
+//                Log.d("ItemsViewModel", "uploadedPicture: $uploadedImageUri")
+                val item = Item(uploadedImageUri.toString(), _location, description, createdDate = LocalDateTime.now().toString())
+                repository.addItemToFirestore(item).collect { itemId ->
+//                    Log.d("ItemsViewModel", "addItem id: $itemId")
+                    _isItemAddedState.value = itemId
+                    _takeOutUiState.value = TakeOutUiState.MainView
+                }
             }
         }
     }

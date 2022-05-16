@@ -1,9 +1,10 @@
 package com.nonamepk.levantalo.repository
 
+import android.net.Uri
 import android.util.Log
 import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.storage.StorageReference
 import com.nonamepk.levantalo.model.Item
-import com.nonamepk.levantalo.model.Response
 import com.nonamepk.levantalo.model.Response.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -15,7 +16,8 @@ import javax.inject.Singleton
 
 @Singleton
 class ItemRepositoryImpl @Inject constructor(
-    private val itemsRef: CollectionReference
+    private val itemsRef: CollectionReference,
+    private val storageRef: StorageReference
 ): ItemRepository {
 
     override fun getItemsFromFirestore() = callbackFlow {
@@ -36,7 +38,7 @@ class ItemRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun addItemToFirestore(item: Item): Flow<Response<String?>> = flow {
+    override suspend fun addItemToFirestore(item: Item) = flow {
         try {
             emit(Loading)
             val itemId = itemsRef.document().id
@@ -45,5 +47,10 @@ class ItemRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             emit(Error(e.message ?: e.toString()))
         }
+    }
+
+    override suspend fun uploadImageToFbStorage(imageUri: Uri): Flow<Uri?> = flow {
+            val imageRef = storageRef.child("images/${imageUri.lastPathSegment}")
+            emit(imageRef.putFile(imageUri).await().storage.downloadUrl.await())
     }
 }

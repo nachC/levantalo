@@ -17,6 +17,8 @@ import androidx.camera.core.ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
@@ -104,17 +106,19 @@ fun TakeOutItemScreen(
                 viewModel = viewModel,
                 onTakePictureClicked = { viewModel.openCameraView() },
                 onAddItemClicked = { description ->
-                    addItem(description = description, fusedLocationClient = fusedLocationClient, viewModel = viewModel)
+                    addItem(imageUri = imageUri, description = description, fusedLocationClient = fusedLocationClient, viewModel = viewModel)
                 }
             )
             is TakeOutUiState.CameraView -> CameraCaptureScreen(
                 viewModel = viewModel,
             ) { file ->
+                Log.d("TakeOut", "imageUri from Camera: ${file.toUri()}")
                 imageUri = file.toUri()
             }
             is TakeOutUiState.GalleryView -> GallerySelectionScreen(
                 viewModel = viewModel
             ) {  uri ->
+                Log.d("TakeOut", "imageUri from Gallery: $uri")
                 imageUri = uri
             }
             is TakeOutUiState.Error -> Text("Error")
@@ -151,6 +155,7 @@ private fun CreateBody(
         modifier = Modifier.fillMaxSize()
     ) {
         Column(
+            modifier = Modifier.verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         )
         {
@@ -197,6 +202,7 @@ private fun CreateBody(
 
 @SuppressLint("MissingPermission")
 private fun addItem(
+    imageUri: Uri,
     description: String?,
     fusedLocationClient: FusedLocationProviderClient,
     viewModel: ItemsViewModel) {
@@ -224,7 +230,7 @@ private fun addItem(
             } else {
                 fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
             }
-            location?.let { location -> viewModel.addItem(null, location, description) }
+            location?.let { location -> viewModel.addItem(imageUri, location, description) }
         }
         .addOnFailureListener {
             Log.d("OnFailureListener", "Location: ${it.message}")
