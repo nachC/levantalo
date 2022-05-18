@@ -2,20 +2,24 @@ package com.nonamepk.levantalo.composables
 
 import android.Manifest
 import android.content.Intent
+import android.graphics.drawable.Icon
 import android.net.Uri
 import android.provider.Settings
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
+import androidx.compose.material.Card
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -32,6 +36,7 @@ fun GoogleMapView(
     items: List<Item>
 ) {
     val context = LocalContext.current
+    var selectedMarker by remember { mutableStateOf<Item?>(null)}
 
     /*Permission(
         permissions = listOf(
@@ -64,7 +69,7 @@ fun GoogleMapView(
         }
     ) {*/
 
-        val barcelona = LatLng(items.first().location?.latitude!!, items.first().location?.longitude!!)
+        val barcelona = LatLng(41.390205, 2.154007)
         val cameraPositionState = rememberCameraPositionState {
             position = CameraPosition.fromLatLngZoom(barcelona, 13f)
         }
@@ -76,22 +81,37 @@ fun GoogleMapView(
             )
         )
 
+    Box(
+        contentAlignment = Alignment.TopCenter
+    ) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
-            properties = MapProperties(isMyLocationEnabled = locationPermissionsState.allPermissionsGranted)
+            properties = MapProperties(isMyLocationEnabled = locationPermissionsState.allPermissionsGranted),
+            onMapClick = { selectedMarker = null }
         ) {
-
             items.forEach { item ->
                 item.location?.let {
                     Marker(
                         position = LatLng(
                             it.latitude!!,
                             it.longitude!!
-                        )
+                        ),
+                        icon = if (selectedMarker != item) BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED) else BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE),
+                        onClick = {
+                            selectedMarker = item
+                            true
+                        }
                     )
                 }
             }
         }
+        if (selectedMarker != null)
+            Card(
+                modifier = Modifier.padding(top = 20.dp).size(300.dp, 300.dp)
+            ) {
+                AsyncImage(model = selectedMarker?.picture, contentDescription = "item picture")
+            }
+    }
 //    }
 }

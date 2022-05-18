@@ -136,7 +136,6 @@ fun TakeOutItemScreen(
                 }
             }
         }
-
     }
 }
 
