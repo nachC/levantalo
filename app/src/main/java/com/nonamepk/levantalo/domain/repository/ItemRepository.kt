@@ -1,8 +1,8 @@
-package com.nonamepk.levantalo.repository
+package com.nonamepk.levantalo.domain.repository
 
 import android.net.Uri
-import com.nonamepk.levantalo.model.Item
-import com.nonamepk.levantalo.model.Response
+import com.nonamepk.levantalo.domain.model.Item
+import com.nonamepk.levantalo.domain.model.Response
 import kotlinx.coroutines.flow.Flow
 
 interface ItemRepository {

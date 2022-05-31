@@ -1,25 +1,21 @@
-package com.nonamepk.levantalo.screens.home
+package com.nonamepk.levantalo.presentation.screens.home
 
 import android.net.Uri
-import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
-import com.nonamepk.levantalo.model.Item
-import com.nonamepk.levantalo.model.LatLng as ItemLatLng
-import com.nonamepk.levantalo.model.Response
-import com.nonamepk.levantalo.repository.ItemRepository
+import com.nonamepk.levantalo.domain.model.Item
+import com.nonamepk.levantalo.domain.model.Response
+import com.nonamepk.levantalo.domain.use_case.UseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
 import javax.inject.Inject
 
 @HiltViewModel
 class ItemsViewModel @Inject constructor(
-    private val repository: ItemRepository
+    private val useCases: UseCases
 ) : ViewModel() {
 
     private val _itemsState = mutableStateOf<Response<List<Item>>>(Response.Loading)
@@ -37,8 +33,7 @@ class ItemsViewModel @Inject constructor(
 
     private fun getItems() {
         viewModelScope.launch {
-            repository.getItemsFromFirestore().collect { response ->
-                Log.d("ItemsViewModel", "getItems: $response")
+            useCases.getItems().collect { response ->
                 _itemsState.value = response
             }
         }
@@ -50,16 +45,9 @@ class ItemsViewModel @Inject constructor(
         description: String?
     ) {
         _takeOutUiState.value = TakeOutUiState.Loading
-        val _location = ItemLatLng(latitude = location.latitude, longitude = location.longitude)
         viewModelScope.launch {
-            repository.uploadImageToFbStorage(imageUri = picture).collect { uploadedImageUri ->
-//                Log.d("ItemsViewModel", "uploadedPicture: $uploadedImageUri")
-                val item = Item(uploadedImageUri.toString(), _location, description, createdDate = LocalDateTime.now().toString())
-                repository.addItemToFirestore(item).collect { itemId ->
-//                    Log.d("ItemsViewModel", "addItem id: $itemId")
-                    _isItemAddedState.value = itemId
-                    _takeOutUiState.value = TakeOutUiState.MainView
-                }
+            useCases.addItem(picture, location, description).collect {
+                _isItemAddedState.value = it
             }
         }
     }

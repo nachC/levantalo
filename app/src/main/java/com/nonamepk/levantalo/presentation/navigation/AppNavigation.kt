@@ -1,14 +1,14 @@
-package com.nonamepk.levantalo.navigation
+package com.nonamepk.levantalo.presentation.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.nonamepk.levantalo.screens.home.HomeScreen
-import com.nonamepk.levantalo.screens.start.StartScreen
-import com.nonamepk.levantalo.screens.takeoutitem.CameraPreview
-import com.nonamepk.levantalo.screens.takeoutitem.TakeOutItemScreen
+import com.nonamepk.levantalo.presentation.screens.home.HomeScreen
+import com.nonamepk.levantalo.presentation.screens.start.StartScreen
+import com.nonamepk.levantalo.presentation.screens.takeoutitem.CameraPreview
+import com.nonamepk.levantalo.presentation.screens.takeoutitem.TakeOutItemScreen
 
 @Composable
 fun AppNavigation(

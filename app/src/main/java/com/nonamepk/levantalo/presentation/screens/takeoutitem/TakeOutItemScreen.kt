@@ -1,4 +1,4 @@
-package com.nonamepk.levantalo.screens.takeoutitem
+package com.nonamepk.levantalo.presentation.screens.takeoutitem
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -41,15 +41,15 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.maps.model.LatLng
-import com.nonamepk.levantalo.composables.CustomTextField
-import com.nonamepk.levantalo.model.Response
-import com.nonamepk.levantalo.navigation.AppScreens
-import com.nonamepk.levantalo.screens.home.ItemsViewModel
-import com.nonamepk.levantalo.screens.home.TakeOutUiState
-import com.nonamepk.levantalo.utils.EMPTY_IMAGE_URI
-import com.nonamepk.levantalo.utils.Permission
-import com.nonamepk.levantalo.utils.executor
-import com.nonamepk.levantalo.utils.getCameraProvider
+import com.nonamepk.levantalo.domain.composables.CustomTextField
+import com.nonamepk.levantalo.domain.model.Response
+import com.nonamepk.levantalo.presentation.navigation.AppScreens
+import com.nonamepk.levantalo.presentation.screens.home.ItemsViewModel
+import com.nonamepk.levantalo.presentation.screens.home.TakeOutUiState
+import com.nonamepk.levantalo.domain.utils.EMPTY_IMAGE_URI
+import com.nonamepk.levantalo.domain.utils.Permission
+import com.nonamepk.levantalo.domain.utils.executor
+import com.nonamepk.levantalo.domain.utils.getCameraProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -121,8 +121,10 @@ fun TakeOutItemScreen(
                 Log.d("TakeOut", "imageUri from Gallery: $uri")
                 imageUri = uri
             }
-            is TakeOutUiState.Error -> Text("Error")
-            is TakeOutUiState.Loading -> CircularProgressIndicator()
+            is TakeOutUiState.Error -> Unit
+            is TakeOutUiState.Loading -> Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                CircularProgressIndicator()
+            }
         }
 
         when (val addItemResponse = viewModel.isItemAddedState.value) {
@@ -132,7 +134,7 @@ fun TakeOutItemScreen(
                 Log.d("TakeOutItemScreen", "Response: $addItemResponse")
                 if (addItemResponse.data != null) {
                     Toast.makeText(context, "Item added", Toast.LENGTH_SHORT).show()
-                    navController.popBackStack(route = AppScreens.StartScreen.name, inclusive = false)
+                    navController.navigateUp()
                 }
             }
         }
@@ -204,7 +206,8 @@ private fun addItem(
     imageUri: Uri,
     description: String?,
     fusedLocationClient: FusedLocationProviderClient,
-    viewModel: ItemsViewModel) {
+    viewModel: ItemsViewModel
+) {
 
     var location: LatLng? = null
     val locationRequest = LocationRequest.create().apply {

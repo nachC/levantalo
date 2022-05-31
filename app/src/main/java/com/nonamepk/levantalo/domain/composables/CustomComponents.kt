@@ -1,4 +1,4 @@
-package com.nonamepk.levantalo.composables
+package com.nonamepk.levantalo.domain.composables
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.text.KeyboardActions

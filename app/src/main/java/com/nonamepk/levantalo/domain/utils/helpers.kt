@@ -1,4 +1,4 @@
-package com.nonamepk.levantalo.utils
+package com.nonamepk.levantalo.domain.utils
 
 import android.content.Context
 import android.location.Geocoder

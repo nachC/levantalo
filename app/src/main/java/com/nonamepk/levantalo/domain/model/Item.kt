@@ -1,4 +1,4 @@
-package com.nonamepk.levantalo.model
+package com.nonamepk.levantalo.domain.model
 
 data class Item(
     val picture: String? = null,

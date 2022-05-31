@@ -1,4 +1,4 @@
-package com.nonamepk.levantalo.screens.start
+package com.nonamepk.levantalo.presentation.screens.start
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button

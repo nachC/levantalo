@@ -1,4 +1,4 @@
-package com.nonamepk.levantalo.navigation
+package com.nonamepk.levantalo.presentation.navigation
 
 enum class AppScreens {
     HomeScreen,

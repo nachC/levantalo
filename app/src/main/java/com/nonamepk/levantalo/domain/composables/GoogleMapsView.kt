@@ -1,11 +1,6 @@
-package com.nonamepk.levantalo.composables
+package com.nonamepk.levantalo.domain.composables
 
 import android.Manifest
-import android.content.Intent
-import android.graphics.drawable.Icon
-import android.net.Uri
-import android.provider.Settings
-import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.Card
@@ -18,7 +13,6 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -26,9 +20,7 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.nonamepk.levantalo.model.Item
-import com.nonamepk.levantalo.utils.Permission
-import com.nonamepk.levantalo.utils.getLocationByAddress
+import com.nonamepk.levantalo.domain.model.Item
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -106,9 +98,14 @@ fun GoogleMapView(
                 }
             }
         }
+        Button(onClick = { /*TODO*/ }, modifier = Modifier.align(Alignment.TopStart)) {
+            Text("Enable location")
+        }
         if (selectedMarker != null)
             Card(
-                modifier = Modifier.padding(top = 20.dp).size(300.dp, 300.dp)
+                modifier = Modifier
+                    .padding(top = 20.dp)
+                    .size(300.dp, 300.dp)
             ) {
                 AsyncImage(model = selectedMarker?.picture, contentDescription = "item picture")
             }

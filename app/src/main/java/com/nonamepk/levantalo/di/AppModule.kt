@@ -4,8 +4,11 @@ import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
-import com.nonamepk.levantalo.repository.ItemRepository
-import com.nonamepk.levantalo.repository.ItemRepositoryImpl
+import com.nonamepk.levantalo.domain.repository.ItemRepository
+import com.nonamepk.levantalo.domain.repository.ItemRepositoryImpl
+import com.nonamepk.levantalo.domain.use_case.AddItem
+import com.nonamepk.levantalo.domain.use_case.GetItems
+import com.nonamepk.levantalo.domain.use_case.UseCases
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,4 +32,10 @@ object AppModule {
 
     @Provides
     fun provideStorageRef(storage: FirebaseStorage) = storage.reference
+
+    @Provides
+    fun provideUseCases(repository: ItemRepository) =UseCases(
+        addItem = AddItem(repository),
+        getItems = GetItems(repository)
+    )
 }

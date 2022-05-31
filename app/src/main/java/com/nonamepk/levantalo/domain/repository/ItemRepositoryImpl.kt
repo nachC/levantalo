@@ -1,11 +1,11 @@
-package com.nonamepk.levantalo.repository
+package com.nonamepk.levantalo.domain.repository
 
 import android.net.Uri
 import android.util.Log
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.storage.StorageReference
-import com.nonamepk.levantalo.model.Item
-import com.nonamepk.levantalo.model.Response.*
+import com.nonamepk.levantalo.domain.model.Item
+import com.nonamepk.levantalo.domain.model.Response.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
